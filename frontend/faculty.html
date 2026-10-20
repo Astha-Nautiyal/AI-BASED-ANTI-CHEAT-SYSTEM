@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html><body>
+<h2>Today's Attendance - DBMS Data</h2>
+<button onclick="load()">Refresh</button>
+<table border="1" id="table"></table>
+<script>
+async function load(){
+  const res=await fetch('http://localhost:5000/api/today');
+  const data=await res.json();
+  let h="<tr><th>ID</th><th>Name</th><th>Time</th><th>Status</th></tr>";
+  data.forEach(r=>{h+=`<tr><td>${r.id}</td><td>${r.name}</td><td>${r.time}</td><td>${r.status}</td></tr>`});
+  document.getElementById('table').innerHTML=h;
+}
+load();
+</script>
+</body></html>

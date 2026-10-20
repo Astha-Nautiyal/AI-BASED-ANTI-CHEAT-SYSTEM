@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head><title>Attendance</title></head>
+<body>
+<h2>AI Anti-Cheat Attendance</h2>
+<input id="sid" placeholder="Enter ID e.g. CSE01">
+<video id="video" width="400" autoplay muted></video>
+<p id="msg">Blink 2 times to prove liveness - Blinks: <span id="blink">0</span></p>
+<button onclick="markAttendance()">Mark Attendance</button>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+let blinkCount=0;
+const video=document.getElementById('video');
+navigator.mediaDevices.getUserMedia({video:true}).then(s=>video.srcObject=s);
+
+// Load face-api models
+Promise.all([
+  faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+  faceapi.nets.faceLandmark68Net.loadFromUri('/models')
+]).then(startDetection);
+
+function startDetection(){
+  setInterval(async()=>{
+    const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+    if(det){
+      const eye = det.landmarks.getLeftEye();
+      const ear = (Math.hypot(eye[1].x-eye[5].x, eye[1].y-eye[5].y) + Math.hypot(eye[2].x-eye[4].x, eye[2].y-eye[4].y)) / (2*Math.hypot(eye[0].x-eye[3].x, eye[0].y-eye[3].y));
+      if(ear < 0.2){ blinkCount++; document.getElementById('blink').innerText=blinkCount; }
+    }
+  }, 200);
+}
+
+async function markAttendance(){
+  const canvas=document.createElement('canvas');
+  canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0);
+  const image=canvas.toDataURL('image/jpeg');
+  const res=await fetch('http://localhost:5000/api/mark',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:document.getElementById('sid').value, image, blink:blinkCount})
+  });
+  const data=await res.json();
+  alert(data.msg);
+  document.getElementById('msg').innerText=data.msg;
+}
+</script>
+</body>
+</html>
