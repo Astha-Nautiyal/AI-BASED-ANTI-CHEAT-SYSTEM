@@ -58,4 +58,4 @@ END;
 CREATE INDEX idx_att_date ON attendance_logs(att_date);
 CREATE INDEX idx_att_student_date ON attendance_logs(student_id, att_date);
 
-COMMIT;
+commit
